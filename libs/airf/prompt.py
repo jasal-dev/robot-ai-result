@@ -6,6 +6,8 @@ from libs.airf.models import FailureAnalysis
 SYSTEM_PROMPT = """You are a QA automation assistant for Robot Framework.
 Your job: classify a test failure and recommend next actions.
 
+When a Playwright trace summary is provided, use it as primary evidence for UI actions, console errors, and network failures.
+
 Hard rules:
 - Output MUST be valid JSON matching the provided JSON Schema.
 - If evidence is insufficient: set failure_type="unknown" and confidence <= 0.5.

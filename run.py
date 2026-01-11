@@ -12,6 +12,7 @@ from robot import run as robot_run
 from libs.airf.openai import OpenAIFailureAnalyzer
 from libs.airf.redact import redact_text
 from libs.airf.robot_parser import extract_failures
+from libs.airf.pw_trace_full import find_single_trace_zip, extract_full_trace_text
 
 
 def main() -> int:
@@ -41,6 +42,19 @@ def main() -> int:
     if not output_xml.exists():
         print(f"ERROR: output.xml not found at {output_xml}", file=sys.stderr)
         return 2
+    
+    trace_zip = find_single_trace_zip("artifacts/robot/browser/traces")
+
+    if not trace_zip:
+        print("[AI][TRACE] No trace zip found")
+    else:
+        print(f"[AI][TRACE] Using trace zip: {trace_zip}")
+
+    trace_full = None
+    if trace_zip:
+        trace_full = extract_full_trace_text(trace_zip)
+
+    print(f"[AI][TRACE] Trace characters: {len(trace_full)}")
 
     failures = extract_failures(str(output_xml), max_message_chars=args.max_message_chars)
 
@@ -55,11 +69,17 @@ def main() -> int:
             "test_name": f.test_name,
             "status": f.status,
             "message": redact_text(f.message),
+            "playwright_trace_zip_path": trace_zip or "(no trace zip found)",
+            "playwright_trace_full": trace_full or "(no trace content)"
             # Add more context here later:
             # "build_id": os.getenv("BUILD_ID"),
             # "git_sha": os.getenv("GIT_SHA"),
             # "browser": os.getenv("BROWSER"),
         }
+
+        debug_payload_path = "artifacts/ai_debug_payload.json"
+        with open(debug_payload_path, "w", encoding="utf-8") as f:
+            json.dump(bundle, f, indent=2, ensure_ascii=False)
 
         try:
             analysis = analyzer.analyze(bundle)

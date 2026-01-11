@@ -9,11 +9,13 @@ FailureType = Literal[
     "test_bug",
     "environment_issue",
     "flaky_test",
+    "test_data_issue",
     "unknown",
 ]
 
 SuggestionCategory = Literal[
     "selector",
+    "data_setup",
     "timing",
     "data",
     "assertion",
